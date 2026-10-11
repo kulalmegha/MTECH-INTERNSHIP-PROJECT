@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Counsellor Casework Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="header-bar">
+    <div class="logo-area">
+      <div class="logo-icon">C</div>
+      <div>
+        <h2 style="font-size: 1.15rem; margin-bottom: 0;">Counsellor Triage Portal</h2>
+        <span id="counsellor-name" style="font-size: 0.8rem; color: var(--text-muted);">Signed in as: Counsellor</span>
+      </div>
+    </div>
+      <button id="btn-summary-report" class="btn btn-secondary btn-sm" title="Download Caseload Risk Summary PDF">
+        📄 Caseload PDF
+      </button>
+      <button id="btn-run-scan" class="btn btn-secondary btn-sm" title="Scan for cases overdue for follow-up check-in">
+        ⏱️ Audit Follow-Ups
+      </button>
+      <button id="btn-new-case" class="btn btn-primary btn-sm">
+        + Register Case
+      </button>
+      <button id="btn-logout" class="btn btn-secondary btn-sm">
+        Sign Out
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Global Flash Notification Banner -->
+    <div id="flash-banner" class="notice-banner" style="display: none;"></div>
+
+    <!-- Summary Metrics Cards -->
+    <section class="cards-grid">
+      <div class="stat-card">
+        <span class="stat-title">Total Active Cases</span>
+        <span id="metric-cases" class="stat-value">—</span>
+        <span class="stat-subtitle">Assigned caseload</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Open Alerts</span>
+        <span id="metric-alerts" class="stat-value" style="color: #f87171;">—</span>
+        <span class="stat-subtitle">Awaiting clinical review</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">Pending Follow-Ups</span>
+        <span id="metric-followups" class="stat-value" style="color: #60a5fa;">—</span>
+        <span class="stat-subtitle">Due or overdue check-ins</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">High-Band Cases</span>
+        <span id="metric-high-band" class="stat-value" style="color: #fbbf24;">—</span>
+        <span class="stat-subtitle">Score &ge; 67 on latest check-in</span>
+      </div>
+    </section>
+
+    <!-- Main Navigation Tabs -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-alerts">Alerts Priority Queue</button>
+      <button class="tab-btn" data-tab="tab-cases">Assigned Cases</button>
+    </div>
+
+    <!-- TAB 1: ALERTS QUEUE -->
+    <section id="tab-alerts" class="tab-content">
+      <div class="table-card">
+        <div class="table-header">
+          <div>
+            <h3>Active Alerts Queue</h3>
+            <p style="font-size: 0.85rem; margin-bottom: 0;">Prioritised: Safety Concern (1) &gt; Counselling Request (2) &gt; Distress Jump (3) &gt; Missed Follow-up (4)</p>
+          </div>
+          <div>
+            <label for="filter-status" style="display: inline; font-size: 0.85rem; margin-right: 0.5rem;">Status:</label>
+            <select id="filter-status" style="width: auto; padding: 0.35rem 0.65rem; font-size: 0.85rem;">
+              <option value="">All Statuses</option>
+              <option value="open" selected>Open Only</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="resolved">Resolved</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Priority</th>
+                <th>Case Code</th>
+                <th>Trigger Reason</th>
+                <th>Timestamp</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="alerts-tbody">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading alerts...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: CASES LIST -->
+    <section id="tab-cases" class="tab-content" style="display: none;">
+      <div class="table-card">
+        <div class="table-header">
+          <div>
+            <h3>Caseload Directory</h3>
+            <p style="font-size: 0.85rem; margin-bottom: 0;">All cases assigned to your casework profile</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Case Code</th>
+                <th>Status</th>
+                <th>Interval</th>
+                <th>Next Follow-Up Due</th>
+                <th>Latest Distress Band</th>
+                <th>Latest Score</th>
+                <th>Open Alerts</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="cases-tbody">
+              <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Loading cases...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: CASE DETAIL & TREND VIEW -->
+  <div id="case-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 id="modal-case-code" style="margin-bottom: 0.25rem;">Case Details: —</h2>
+          <span id="modal-case-meta" style="font-size: 0.85rem; color: var(--text-muted);">—</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button id="btn-case-report" class="btn btn-secondary btn-sm" title="Download Case Progress PDF Dossier">📄 Download PDF</button>
+          <button class="close-btn" id="modal-close">&times;</button>
+        </div>
+      </div>
+
+      <!-- Trend Chart Box -->
+      <h3 style="margin-bottom: 0.5rem;">Longitudinal Distress Trend</h3>
+      <div class="chart-box">
+        <canvas id="trendChart"></canvas>
+      </div>
+
+      <!-- Support Suggestions Box -->
+      <div class="notice-banner" style="background: rgba(2, 132, 199, 0.1); border: 1px solid rgba(2, 132, 199, 0.3); margin-bottom: 1.5rem;">
+        <div style="width: 100%;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>System Suggested Support Categories</strong>
+            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fcd34d;">Pending Professional Review</span>
+          </div>
+          <p style="font-size: 0.8rem; margin: 0.25rem 0 0.5rem 0;">AI suggestions based on reported safety, somatics, and disclosure keywords. System never auto-decides.</p>
+          <div id="modal-support-tags" class="tag-list">
+            <span class="text-muted" style="font-size: 0.85rem;">No active suggestions.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Recording Form -->
+      <div class="stat-card" style="margin-bottom: 1.75rem; background: var(--bg-primary); border-color: var(--border-color);">
+        <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Record Clinical Outreach / Action</h3>
+        <form id="action-form">
+          <input type="hidden" id="action-alert-id">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.75rem;">
+            <div>
+              <label for="action-channel" style="font-size: 0.85rem;">Contact Channel</label>
+              <select id="action-channel">
+                <option value="Phone call">Phone Call</option>
+                <option value="In-person meeting">In-Person Meeting</option>
+                <option value="Secure messaging">Secure Messaging</option>
+                <option value="Safehouse visit">Safehouse / Shelter Visit</option>
+                <option value="Legal advocate consultation">Legal Advocate Consultation</option>
+              </select>
+            </div>
+            <div>
+              <label for="action-target-alert" style="font-size: 0.85rem;">Link to Open Alert</label>
+              <select id="action-target-alert">
+                <option value="">(Select Open Alert or General Case Action)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="action-text" style="font-size: 0.85rem;">Action Taken Details</label>
+            <textarea id="action-text" rows="2" required placeholder="Describe clinical support provided, safety planning, or referrals arranged..."></textarea>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="action-outcome" style="font-size: 0.85rem;">Outcome Notes (Optional)</label>
+            <input type="text" id="action-outcome" placeholder="e.g. Victim feeling reassured; legal transport coordinated for Tuesday.">
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer;">
+              <input type="checkbox" id="action-resolve" checked>
+              <span>Mark selected alert as Resolved</span>
+            </label>
+            <button type="submit" id="btn-save-action" class="btn btn-primary btn-sm">Save Action</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Check-Ins Table -->
+      <h3 style="margin-bottom: 0.5rem;">Historical Check-Ins</h3>
+      <div class="clinical-disclaimer" style="margin-top: 0; margin-bottom: 0.75rem;">
+        <strong>Ethical Notice:</strong> Text emotion and sentiment outputs are model predictions, NOT clinical or psychiatric diagnoses.
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Date / Time</th>
+              <th>Stress (1-10)</th>
+              <th>Emotion</th>
+              <th>Sentiment</th>
+              <th>Distress Score</th>
+              <th>Band</th>
+              <th>Breakdown</th>
+            </tr>
+          </thead>
+          <tbody id="modal-checkins-tbody">
+            <tr><td colspan="7">Loading check-ins...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: REGISTER NEW CASE -->
+  <div id="new-case-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>Register New Case</h2>
+        <button class="close-btn" id="new-case-close">&times;</button>
+      </div>
+      <form id="new-case-form">
+        <div class="form-group">
+          <label for="new-case-code">Case Code (Pseudonym)</label>
+          <input type="text" id="new-case-code" required placeholder="e.g. V101" pattern="^[A-Za-z0-9_-]+$">
+          <div class="helper-text">Unique pseudonym. Never use the victim's real name.</div>
+        </div>
+        <div class="form-group">
+          <label for="new-case-interval">Follow-Up Cadence (Days)</label>
+          <input type="number" id="new-case-interval" value="7" min="1" max="90" required>
+        </div>
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="new-case-consent" required checked>
+            <span>Victim informed consent given and documented</span>
+          </label>
+        </div>
+        <div id="new-case-result" class="notice-banner privacy-notice" style="display: none;"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-case">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-create-case">Create Case</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("mhm_token");
+    if (!token) window.location.href = "/static/index.html";
+
+    let currentCaseData = null;
+    let trendChartInstance = null;
+
+    // Check credentials & Role
+    fetch("/auth/me", { headers: { "Authorization": `Bearer ${token}` } })
+      .then(res => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
+      .then(user => {
+        if (user.role !== "counsellor") window.location.href = "/static/victim.html";
+        document.getElementById("counsellor-name").innerText = `Signed in as: ${user.username}`;
+      })
+      .catch(() => {
+        localStorage.removeItem("mhm_token");
+        window.location.href = "/static/index.html";
+      });
+
+    // Logout
+    document.getElementById("btn-logout").addEventListener("click", () => {
+      localStorage.removeItem("mhm_token");
+      window.location.href = "/static/index.html";
+    });
+
+    // Flash Helper
+    function showFlash(msg, isError = false) {
+      const banner = document.getElementById("flash-banner");
+      banner.className = `notice-banner ${isError ? 'emergency-notice' : 'privacy-notice'}`;
+      banner.innerText = msg;
+      banner.style.display = "flex";
+      setTimeout(() => { banner.style.display = "none"; }, 5000);
+    }
+
+    // Tabs
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+        btn.classList.add("active");
+        document.getElementById(btn.getAttribute("data-tab")).style.display = "block";
+      });
+    });
+
+    // Load Summary Metrics
+    async function loadSummary() {
+      try {
+        const res = await fetch("/dashboard/summary", { headers: { "Authorization": `Bearer ${token}` } });
+        if (!res.ok) return;
+        const d = await res.json();
+        document.getElementById("metric-cases").innerText = d.total_cases;
+        document.getElementById("metric-alerts").innerText = d.open_alerts;
+        document.getElementById("metric-followups").innerText = d.pending_followups;
+        document.getElementById("metric-high-band").innerText = d.high_band_cases;
+      } catch (e) { console.error("Summary load error:", e); }
+    }
+
+    // Load Alerts
+    async function loadAlerts() {
+      const tbody = document.getElementById("alerts-tbody");
+      const statusFilter = document.getElementById("filter-status").value;
+      const url = statusFilter ? `/alerts?status=${statusFilter}` : `/alerts`;
+
+      try {
+        const res = await fetch(url, { headers: { "Authorization": `Bearer ${token}` } });
+        if (!res.ok) throw new Error("Failed to load alerts");
+        const alerts = await res.json();
+
+        if (alerts.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No alerts found matching filter.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = alerts.map(a => {
+          let badgeClass = "badge-followup";
+          if (a.alert_type === "safety_concern") badgeClass = "badge-safety";
+          else if (a.alert_type === "counselling_request") badgeClass = "badge-counselling";
+          else if (a.alert_type === "distress_increase") badgeClass = "badge-distress";
+
+          let statusBadge = "badge-open";
+          if (a.status === "reviewed") statusBadge = "badge-reviewed";
+          if (a.status === "resolved") statusBadge = "badge-resolved";
+
+          const dateStr = new Date(a.created_at).toLocaleString();
+
+          return `
+            <tr>
+              <td><span class="badge ${badgeClass}">P${a.priority}: ${a.alert_type}</span></td>
+              <td><strong><a href="#" onclick="openCaseModal('${a.case_code}'); return false;">${a.case_code}</a></strong></td>
+              <td style="max-width: 420px; font-size: 0.85rem;">${a.reason}</td>
+              <td style="font-size: 0.8rem; color: var(--text-muted);">${dateStr}</td>
+              <td><span class="badge ${statusBadge}">${a.status}</span></td>
+              <td>
+                <div style="display: flex; gap: 0.4rem;">
+                  ${a.status === 'open' ? `<button class="btn btn-secondary btn-sm" onclick="reviewAlert(${a.id})">Review</button>` : ''}
+                  <button class="btn btn-primary btn-sm" onclick="openCaseModal('${a.case_code}', ${a.id})">Action</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="color: #f87171;">${err.message}</td></tr>`;
+      }
+    }
+
+    document.getElementById("filter-status").addEventListener("change", loadAlerts);
+
+    // Review Alert action
+    async function reviewAlert(id) {
+      try {
+        const res = await fetch(`/alerts/${id}/review`, {
+          method: "PATCH",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error("Failed to mark alert as reviewed");
+        showFlash("Alert marked as Reviewed.");
+        loadAlerts();
+        loadSummary();
+      } catch (e) {
+        showFlash(e.message, true);
+      }
+    }
+
+    // Load Cases
+    async function loadCases() {
+      const tbody = document.getElementById("cases-tbody");
+      try {
+        const res = await fetch("/cases", { headers: { "Authorization": `Bearer ${token}` } });
+        if (!res.ok) throw new Error("Failed to load cases");
+        const cases = await res.json();
+
+        if (cases.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No cases assigned.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = cases.map(c => {
+          let bandBadge = `<span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #94a3b8;">No Check-Ins</span>`;
+          if (c.latest_distress_band === "low") bandBadge = `<span class="badge badge-low">Low</span>`;
+          else if (c.latest_distress_band === "moderate") bandBadge = `<span class="badge badge-moderate">Moderate</span>`;
+          else if (c.latest_distress_band === "higher") bandBadge = `<span class="badge badge-higher">Higher</span>`;
+
+          const nextDue = c.next_follow_up_due ? new Date(c.next_follow_up_due).toLocaleDateString() : "—";
+          const score = c.latest_distress_score !== null ? c.latest_distress_score.toFixed(1) : "—";
+
+          return `
+            <tr>
+              <td><strong>${c.case_code}</strong></td>
+              <td><span class="badge badge-reviewed">${c.status}</span></td>
+              <td>Every ${c.follow_up_interval_days}d</td>
+              <td style="font-size: 0.85rem;">${nextDue}</td>
+              <td>${bandBadge}</td>
+              <td><strong>${score}</strong></td>
+              <td>${c.open_alerts_count > 0 ? `<span class="badge badge-higher">${c.open_alerts_count} Open</span>` : `<span class="text-muted">0</span>`}</td>
+              <td>
+                <button class="btn btn-secondary btn-sm" onclick="openCaseModal('${c.case_code}')">View Details</button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="8" style="color: #f87171;">${e.message}</td></tr>`;
+      }
+    }
+
+    // Open Case Detail Modal
+    async function openCaseModal(caseCode, focusAlertId = null) {
+      window.currentCaseCode = caseCode;
+      const modal = document.getElementById("case-modal");
+      document.getElementById("modal-case-code").innerText = `Case: ${caseCode}`;
+      modal.classList.add("active");
+
+      // Load Trend Points & Chart
+      try {
+        const trendRes = await fetch(`/cases/${caseCode}/trend`, { headers: { "Authorization": `Bearer ${token}` } });
+        const trendData = await trendRes.json();
+        renderTrendChart(trendData);
+      } catch (e) { console.error("Trend load err:", e); }
+
+      // Load Check-ins History
+      try {
+        const chkRes = await fetch(`/cases/${caseCode}/checkins`, { headers: { "Authorization": `Bearer ${token}` } });
+        const checkins = await chkRes.json();
+        renderCheckinsTable(checkins);
+        renderSupportTags(checkins);
+      } catch (e) { console.error("Checkins load err:", e); }
+
+      // Populate Alert selection for Action Form
+      try {
+        const alertsRes = await fetch(`/alerts?status=open`, { headers: { "Authorization": `Bearer ${token}` } });
+        const alerts = await alertsRes.json();
+        const caseAlerts = alerts.filter(a => a.case_code === caseCode);
+
+        const selectElem = document.getElementById("action-target-alert");
+        selectElem.innerHTML = `<option value="">(Select Alert to Resolve)</option>` +
+          caseAlerts.map(a => `<option value="${a.id}" ${focusAlertId === a.id ? 'selected' : ''}>[${a.alert_type}] ${a.reason.substring(0, 50)}...</option>`).join("");
+      } catch (e) { console.error("Alert options load err:", e); }
+    }
+
+    // Render Chart.js Trend
+    function renderTrendChart(points) {
+      const ctx = document.getElementById("trendChart").getContext("2d");
+      if (trendChartInstance) trendChartInstance.destroy();
+
+      if (!points || points.length === 0) {
+        ctx.clearRect(0, 0, 800, 280);
+        ctx.font = "14px sans-serif";
+        ctx.fillStyle = "#94a3b8";
+        ctx.textAlign = "center";
+        ctx.fillText("No check-in trend data recorded yet.", 400, 140);
+        return;
+      }
+
+      const labels = points.map(p => new Date(p.date).toLocaleDateString() + " " + new Date(p.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+      const scores = points.map(p => p.distress_score);
+      const pointColors = points.map(p => p.has_alert ? '#ef4444' : '#0284c7');
+      const pointRadii = points.map(p => p.has_alert ? 8 : 4);
+
+      trendChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Distress Score (0-100)',
+            data: scores,
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointBackgroundColor: pointColors,
+            pointBorderColor: '#ffffff',
+            pointRadius: pointRadii,
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              grid: { color: 'rgba(71, 85, 105, 0.2)' },
+              ticks: { color: '#94a3b8' }
+            },
+            x: {
+              grid: { color: 'rgba(71, 85, 105, 0.2)' },
+              ticks: { color: '#94a3b8' }
+            }
+          },
+          plugins: {
+            legend: { labels: { color: '#f8fafc' } },
+            tooltip: {
+              callbacks: {
+                afterLabel: (ctx) => {
+                  const pt = points[ctx.dataIndex];
+                  let extra = `Stress: ${pt.stress_level}/10 | Emotion: ${pt.emotion_label || 'none'}`;
+                  if (pt.has_alert) extra += `\nALERTS: ${pt.alert_types.join(', ')}`;
+                  return extra;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Render Support Tags
+    function renderSupportTags(checkins) {
+      const container = document.getElementById("modal-support-tags");
+      const allTags = [];
+      checkins.forEach(c => {
+        (c.support_tags || []).forEach(t => allTags.push(t.category));
+      });
+      const unique = [...new Set(allTags)];
+      if (unique.length === 0) {
+        container.innerHTML = `<span style="font-size: 0.85rem; color: var(--text-muted);">No current recommendations flagged.</span>`;
+        return;
+      }
+      container.innerHTML = unique.map(tag => `<span class="tag-item">📋 ${tag}</span>`).join("");
+    }
+
+    // Render Check-ins Table
+    function renderCheckinsTable(checkins) {
+      const tbody = document.getElementById("modal-checkins-tbody");
+      if (!checkins || checkins.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No check-in history found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = checkins.slice().reverse().map(c => {
+        const dateStr = new Date(c.created_at).toLocaleString();
+        let bandBadge = `<span class="badge badge-low">Low</span>`;
+        if (c.distress_band === "moderate") bandBadge = `<span class="badge badge-moderate">Moderate</span>`;
+        if (c.distress_band === "higher") bandBadge = `<span class="badge badge-higher">Higher</span>`;
+
+        const bd = c.score_breakdown || {};
+
+        return `
+          <tr>
+            <td style="font-size: 0.85rem;">${dateStr}</td>
+            <td><strong>${c.stress_level}</strong>/10</td>
+            <td><span class="badge" style="background: rgba(148, 163, 184, 0.2);">${c.emotion_label || '—'}</span></td>
+            <td><span class="badge" style="background: rgba(148, 163, 184, 0.2);">${c.sentiment_label || '—'}</span></td>
+            <td><strong>${c.distress_score !== null ? c.distress_score.toFixed(1) : '—'}</strong></td>
+            <td>${bandBadge}</td>
+            <td>
+              <button class="btn btn-secondary btn-sm" onclick="toggleBreakdown('bd-${c.id}')">Breakdown</button>
+            </td>
+          </tr>
+          <tr id="bd-${c.id}" style="display: none; background: rgba(15, 23, 42, 0.7);">
+            <td colspan="7">
+              <div class="breakdown-details">
+                <div style="margin-bottom: 0.5rem; font-weight: 600; color: #38bdf8;">
+                  Transparent Score Breakdown (Pure Function Calculation):
+                </div>
+                <div class="breakdown-grid">
+                  <div class="breakdown-item">
+                    <div class="breakdown-label">Stress (Max 30)</div>
+                    <div class="breakdown-val">${bd.stress_points ?? '0.0'} pts</div>
+                  </div>
+                  <div class="breakdown-item">
+                    <div class="breakdown-label">Safety (Max 25)</div>
+                    <div class="breakdown-val">${bd.safety_points ?? '0.0'} pts</div>
+                  </div>
+                  <div class="breakdown-item">
+                    <div class="breakdown-label">Negative Sent (Max 15)</div>
+                    <div class="breakdown-val">${bd.sentiment_points ?? '0.0'} pts</div>
+                  </div>
+                  <div class="breakdown-item">
+                    <div class="breakdown-label">Distress Emo (Max 10)</div>
+                    <div class="breakdown-val">${bd.emotion_points ?? '0.0'} pts</div>
+                  </div>
+                  <div class="breakdown-item">
+                    <div class="breakdown-label">Sleep (Max 5)</div>
+                    <div class="breakdown-val">${bd.sleep_points ?? '0.0'} pts</div>
+                  </div>
+                  <div class="breakdown-item">
+                    <div class="breakdown-label">Counsel Request (Max 5)</div>
+                    <div class="breakdown-val">${bd.counselling_points ?? '0.0'} pts</div>
+                  </div>
+                  <div class="breakdown-item">
+                    <div class="breakdown-label">Prior Jump (Max 10)</div>
+                    <div class="breakdown-val">${bd.delta_points ?? '0.0'} pts</div>
+                  </div>
+                  <div class="breakdown-item" style="border: 1px solid #38bdf8;">
+                    <div class="breakdown-label">Final Score (Cap 100)</div>
+                    <div class="breakdown-val" style="color: #38bdf8;">${bd.final_score ?? c.distress_score} pts</div>
+                  </div>
+                </div>
+                ${c.free_text ? `<div style="margin-top: 0.5rem; font-style: italic; color: var(--text-muted); font-size: 0.8rem;">Disclosure: "${c.free_text}"</div>` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function toggleBreakdown(elemId) {
+      const row = document.getElementById(elemId);
+      row.style.display = row.style.display === "none" ? "table-row" : "none";
+    }
+
+    // Modal Close
+    document.getElementById("modal-close").addEventListener("click", () => {
+      document.getElementById("case-modal").classList.remove("active");
+    });
+
+    // Save Clinical Action
+    document.getElementById("action-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const alertId = document.getElementById("action-target-alert").value;
+      const action_taken = document.getElementById("action-text").value.trim();
+      const contact_channel = document.getElementById("action-channel").value;
+      const outcome = document.getElementById("action-outcome").value.trim() || null;
+      const resolve_alert = document.getElementById("action-resolve").checked;
+
+      if (!alertId) {
+        showFlash("Please select an alert from the dropdown to link your action.", true);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/alerts/${alertId}/actions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ action_taken, contact_channel, outcome, resolve_alert })
+        });
+        if (!res.ok) throw new Error("Failed to record action");
+        showFlash("Action logged and alert resolved successfully.");
+        document.getElementById("action-text").value = "";
+        document.getElementById("action-outcome").value = "";
+        document.getElementById("case-modal").classList.remove("active");
+        loadAlerts();
+        loadCases();
+        loadSummary();
+      } catch (err) {
+        showFlash(err.message, true);
+      }
+    });
+
+    // Audit follow-ups button
+    document.getElementById("btn-run-scan").addEventListener("click", async () => {
+      try {
+        const res = await fetch("/admin/run-followup-check", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const d = await res.json();
+        showFlash(`Follow-up scan completed: ${d.alerts_generated} missed follow-up alert(s) generated.`);
+        loadAlerts();
+        loadSummary();
+      } catch (e) {
+        showFlash("Error running follow-up scan.", true);
+      }
+    });
+
+    // New Case Modal
+    const newCaseModal = document.getElementById("new-case-modal");
+    document.getElementById("btn-new-case").addEventListener("click", () => {
+      document.getElementById("new-case-result").style.display = "none";
+      document.getElementById("new-case-form").reset();
+      newCaseModal.classList.add("active");
+    });
+    document.getElementById("new-case-close").addEventListener("click", () => {
+      newCaseModal.classList.remove("active");
+    });
+    document.getElementById("btn-cancel-case").addEventListener("click", () => {
+      newCaseModal.classList.remove("active");
+    });
+
+    document.getElementById("new-case-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const case_code = document.getElementById("new-case-code").value.trim();
+      const follow_up_interval_days = parseInt(document.getElementById("new-case-interval").value, 10);
+      const consent_given = document.getElementById("new-case-consent").checked;
+
+      try {
+        const res = await fetch("/cases", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ case_code, follow_up_interval_days, consent_given })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || "Failed to create case.");
+        }
+        const created = await res.json();
+        const resBox = document.getElementById("new-case-result");
+        resBox.innerHTML = `
+          <div>
+            <strong>Case Created Successfully!</strong><br>
+            Victim Username: <code>${created.victim_username}</code><br>
+            One-Time Password: <code>${created.one_time_password}</code><br>
+            <span style="font-size: 0.8rem; color: #f87171;">Save this password now; it will not be displayed again.</span>
+          </div>
+        `;
+        resBox.style.display = "block";
+        loadCases();
+        loadSummary();
+      } catch (err) {
+        showFlash(err.message, true);
+      }
+    });
+
+    // Caseload Summary Report Download
+    document.getElementById("btn-summary-report").addEventListener("click", async () => {
+      try {
+        showFlash("Generating Caseload Risk Summary PDF...", false);
+        const res = await fetch("/reports/summary", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error("Failed to generate summary PDF");
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `caseload_summary_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showFlash("Caseload PDF downloaded successfully.");
+      } catch (e) {
+        showFlash(e.message, true);
+      }
+    });
+
+    // Case Progress PDF Dossier Download
+    document.getElementById("btn-case-report").addEventListener("click", async () => {
+      if (!window.currentCaseCode) return;
+      try {
+        showFlash(`Generating Clinical Progress PDF for Case ${window.currentCaseCode}...`, false);
+        const res = await fetch(`/cases/${window.currentCaseCode}/report`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error(`Failed to generate PDF for case ${window.currentCaseCode}`);
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `case_report_${window.currentCaseCode}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showFlash(`Case ${window.currentCaseCode} PDF downloaded successfully.`);
+      } catch (e) {
+        showFlash(e.message, true);
+      }
+    });
+
+    // Initial Data Fetch
+    loadSummary();
+    loadAlerts();
+    loadCases();
+  </script>
+</body>
+</html>

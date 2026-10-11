@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Victim Self-Care Check-In</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+  <header class="header-bar">
+    <div class="logo-area">
+      <div class="logo-icon">M</div>
+      <div>
+        <h2 style="font-size: 1.15rem; margin-bottom: 0;">Support & Check-In Portal</h2>
+        <span id="user-display" style="font-size: 0.8rem; color: var(--text-muted);">Signed in as: Victim</span>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button id="btn-logout" class="btn btn-secondary btn-sm">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="container" style="max-width: 680px; padding-top: 2rem; padding-bottom: 3rem;">
+
+    <!-- Emergency disclaimer banner -->
+    <div class="notice-banner emergency-notice">
+      <span style="font-size: 1.25rem;">⚠️</span>
+      <div>
+        <strong>Important Emergency Notice</strong>
+        <div>This system is a non-emergency routine check-in tool. If you are in immediate danger or facing an acute crisis, please contact local emergency authorities (e.g. 112 / 911 / emergency services) or a 24/7 crisis helpline immediately.</div>
+      </div>
+    </div>
+
+    <!-- Privacy and Consent Notice -->
+    <div class="notice-banner privacy-notice">
+      <span style="font-size: 1.25rem;">🛡️</span>
+      <div>
+        <strong>Your Privacy & Consent</strong>
+        <div>Your responses are confidential and protected. No personal identifiers (such as names, phone numbers, or addresses) are recorded in this system. Your responses are shared strictly with your designated support counsellor to help guide your care.</div>
+      </div>
+    </div>
+
+    <!-- Check-In Form Card -->
+    <div id="checkin-container" class="stat-card" style="padding: 1.75rem; background: var(--bg-surface);">
+      
+      <div style="margin-bottom: 1.5rem;">
+        <h1>How are you feeling today?</h1>
+        <p>Please take your time answering these questions. There are no right or wrong answers.</p>
+      </div>
+
+      <div id="form-error" class="notice-banner emergency-notice" style="display: none;">
+        <span>⚠️</span>
+        <div id="form-error-msg">Failed to submit check-in.</div>
+      </div>
+
+      <form id="checkin-form">
+
+        <!-- 1. Stress Level -->
+        <div class="form-group" style="margin-bottom: 1.75rem;">
+          <label for="stress-range">1. What is your overall stress or tension level today?</label>
+          <div class="helper-text" style="margin-bottom: 0.5rem;">Rate from 1 (very calm, low tension) to 10 (overwhelmingly high stress).</div>
+          <div class="range-container">
+            <input type="range" id="stress-range" min="1" max="10" value="5" class="range-slider">
+            <div id="stress-badge" class="range-badge">5</div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
+            <span>1 — Very Low</span>
+            <span>5 — Moderate</span>
+            <span>10 — Severe</span>
+          </div>
+        </div>
+
+        <!-- 2. Physical Safety -->
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label>2. Do you currently feel safe in your environment?</label>
+          <div class="radio-options">
+            <label class="radio-card">
+              <input type="radio" name="feels_safe" value="true" checked>
+              <span>Yes, I feel safe</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="feels_safe" value="false">
+              <span>No, I do not feel safe</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. Active Threats -->
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label>3. Are you currently facing any active threats, intimidation, or harassment?</label>
+          <div class="radio-options">
+            <label class="radio-card">
+              <input type="radio" name="faces_threat" value="false" checked>
+              <span>No active threats</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="faces_threat" value="true">
+              <span>Yes, I face threats</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 4. Sleep Difficulty -->
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label>4. Have you experienced significant sleep difficulty or nightmares recently?</label>
+          <div class="radio-options">
+            <label class="radio-card">
+              <input type="radio" name="sleep_difficulty" value="false" checked>
+              <span>No, sleeping okay</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="sleep_difficulty" value="true">
+              <span>Yes, having sleep difficulty</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 5. Counselling Request -->
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label>5. Would you like to speak with your counsellor as soon as possible?</label>
+          <div class="radio-options">
+            <label class="radio-card">
+              <input type="radio" name="wants_counselling" value="false" checked>
+              <span>Not at this time</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="wants_counselling" value="true">
+              <span>Yes, please contact me</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 6. Free Text Narrative -->
+        <div class="form-group" style="margin-bottom: 2rem;">
+          <label for="free-text">6. In your own words, is there anything you would like to share with your counsellor?</label>
+          <div class="helper-text" style="margin-bottom: 0.5rem;">Optional. You can write about what is on your mind, court updates, feelings, or needs.</div>
+          <textarea id="free-text" rows="4" placeholder="Share your thoughts here..."></textarea>
+        </div>
+
+        <button type="submit" id="btn-submit" class="btn btn-primary btn-block" style="padding: 0.85rem; font-size: 1.05rem;">
+          Submit Check-In
+        </button>
+      </form>
+    </div>
+
+    <!-- Confirmation Screen (Hidden Initially) -->
+    <div id="confirmation-screen" class="stat-card" style="display: none; padding: 2.5rem; text-align: center; background: var(--bg-surface);">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+      <h2 style="font-size: 1.6rem; color: #5eead4;">Check-In Successfully Submitted</h2>
+      <p style="font-size: 1rem; color: var(--text-main); margin-top: 0.75rem;">
+        Thank you for sharing your update with us. Your responses have been safely recorded and forwarded to your assigned caseworker.
+      </p>
+      <div class="clinical-disclaimer" style="margin: 1.5rem auto; max-width: 520px; text-align: left;">
+        <strong>Next Steps:</strong> Your counsellor routinely reviews updates and prioritises check-in outreach based on safety and wellbeing indicators. If you requested counselling, they will reach out through your agreed contact channel.
+      </div>
+      <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;">
+        <button id="btn-new-checkin" class="btn btn-secondary">Submit Another Check-In</button>
+        <button id="btn-confirm-logout" class="btn btn-primary">Sign Out</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const token = localStorage.getItem("mhm_token");
+    if (!token) {
+      window.location.href = "/static/index.html";
+    }
+
+    // Authenticate and verify role
+    fetch("/auth/me", {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Unauthorized");
+      return res.json();
+    })
+    .then(user => {
+      if (user.role !== "victim") {
+        window.location.href = "/static/dashboard.html";
+      }
+      document.getElementById("user-display").innerText = `Signed in as: ${user.username}`;
+    })
+    .catch(() => {
+      localStorage.removeItem("mhm_token");
+      window.location.href = "/static/index.html";
+    });
+
+    // Slider label binding
+    const stressSlider = document.getElementById("stress-range");
+    const stressBadge = document.getElementById("stress-badge");
+    stressSlider.addEventListener("input", (e) => {
+      stressBadge.innerText = e.target.value;
+    });
+
+    // Form submission
+    const form = document.getElementById("checkin-form");
+    const checkinContainer = document.getElementById("checkin-container");
+    const confirmScreen = document.getElementById("confirmation-screen");
+    const formError = document.getElementById("form-error");
+    const formErrorMsg = document.getElementById("form-error-msg");
+    const btnSubmit = document.getElementById("btn-submit");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      formError.style.display = "none";
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = "Submitting securely...";
+
+      const stress_level = parseInt(stressSlider.value, 10);
+      const feels_safe = document.querySelector('input[name="feels_safe"]:checked').value === "true";
+      const faces_threat = document.querySelector('input[name="faces_threat"]:checked').value === "true";
+      const sleep_difficulty = document.querySelector('input[name="sleep_difficulty"]:checked').value === "true";
+      const wants_counselling = document.querySelector('input[name="wants_counselling"]:checked').value === "true";
+      const free_text = document.getElementById("free-text").value.trim() || null;
+
+      try {
+        const res = await fetch("/checkins", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            stress_level,
+            feels_safe,
+            faces_threat,
+            sleep_difficulty,
+            wants_counselling,
+            free_text
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || "Error saving check-in.");
+        }
+
+        // Show confirmation screen (DO NOT show the distress score to the victim!)
+        checkinContainer.style.display = "none";
+        confirmScreen.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+      } catch (err) {
+        formErrorMsg.innerText = err.message;
+        formError.style.display = "flex";
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = "Submit Check-In";
+      }
+    });
+
+    // Reset checkin button
+    document.getElementById("btn-new-checkin").addEventListener("click", () => {
+      form.reset();
+      stressSlider.value = 5;
+      stressBadge.innerText = 5;
+      confirmScreen.style.display = "none";
+      checkinContainer.style.display = "block";
+    });
+
+    // Logout buttons
+    const logout = () => {
+      localStorage.removeItem("mhm_token");
+      window.location.href = "/static/index.html";
+    };
+    document.getElementById("btn-logout").addEventListener("click", logout);
+    document.getElementById("btn-confirm-logout").addEventListener("click", logout);
+  </script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MHM Portal — Secure Sign In</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body style="justify-content: center; align-items: center; padding: 1.5rem;">
+
+  <div class="auth-container">
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+      <div class="logo-icon" style="width: 44px; height: 44px; margin: 0 auto 0.75rem auto; font-size: 1.25rem;">M</div>
+      <h1>Mental Health Monitoring Portal</h1>
+      <p style="font-size: 0.9rem;">Distress Prioritisation & Casework Support System</p>
+    </div>
+
+    <div class="notice-banner privacy-notice" style="margin-bottom: 1.25rem;">
+      <span>🔒</span>
+      <div>
+        <strong>Confidential & Privacy-First</strong>
+        <div>Authorised access only. All check-ins and case data are protected under strict RBAC.</div>
+      </div>
+    </div>
+
+    <div id="login-error" class="notice-banner emergency-notice" style="display: none; margin-bottom: 1rem;">
+      <span>⚠️</span>
+      <div id="error-message">Invalid credentials.</div>
+    </div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="username">Username or Case ID</label>
+        <input type="text" id="username" name="username" required autocomplete="username" placeholder="e.g. admin_counsellor or v_v001">
+        <div class="helper-text">Victims use the username provided on your intake sheet (e.g. v_casecode).</div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password">
+      </div>
+
+      <button type="submit" id="btn-login" class="btn btn-primary btn-block" style="padding: 0.75rem; font-size: 1rem; margin-top: 0.5rem;">
+        Sign In
+      </button>
+    </form>
+
+    <div class="clinical-disclaimer" style="text-align: center; margin-top: 1.5rem;">
+      <strong>Notice:</strong> This is a decision-support prioritization tool for authorised counsellors. It is not an emergency response service or diagnostic tool.
+    </div>
+  </div>
+
+  <script>
+    // Check if already logged in
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("mhm_token");
+      if (token) {
+        try {
+          const res = await fetch("/auth/me", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const user = await res.json();
+            if (user.role === "counsellor") {
+              window.location.href = "/static/dashboard.html";
+            } else if (user.role === "victim") {
+              window.location.href = "/static/victim.html";
+            }
+          }
+        } catch (e) {
+          localStorage.removeItem("mhm_token");
+        }
+      }
+    });
+
+    const form = document.getElementById("login-form");
+    const errorBox = document.getElementById("login-error");
+    const errorMsg = document.getElementById("error-message");
+    const btnLogin = document.getElementById("btn-login");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorBox.style.display = "none";
+      btnLogin.disabled = true;
+      btnLogin.innerText = "Signing in...";
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch("/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.detail || "Authentication failed. Please verify your credentials.");
+        }
+
+        const data = await res.json();
+        localStorage.setItem("mhm_token", data.access_token);
+
+        // Fetch user profile to route correctly
+        const meRes = await fetch("/auth/me", {
+          headers: { "Authorization": `Bearer ${data.access_token}` }
+        });
+        const user = await meRes.json();
+
+        if (user.role === "counsellor") {
+          window.location.href = "/static/dashboard.html";
+        } else {
+          window.location.href = "/static/victim.html";
+        }
+      } catch (err) {
+        errorMsg.innerText = err.message;
+        errorBox.style.display = "flex";
+      } finally {
+        btnLogin.disabled = false;
+        btnLogin.innerText = "Sign In";
+      }
+    });
+  </script>
+</body>
+</html>

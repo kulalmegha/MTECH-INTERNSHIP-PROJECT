@@ -1,0 +1,81 @@
+# ====================
+# Python
+# ====================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.pyo
+
+# ====================
+# Virtual Environments
+# ====================
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# ====================
+# Environment Variables
+# ====================
+.env
+.env.*
+!.env.example
+
+# ====================
+# SQLite Databases
+# ====================
+*.db
+*.sqlite
+*.sqlite3
+
+# ====================
+# Test Artifacts
+# ====================
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+pytest_cache/
+*.log
+
+# ====================
+# Jupyter Notebooks
+# ====================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ====================
+# IDE / Editor
+# ====================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ====================
+# OS Files
+# ====================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ====================
+# Distribution / Packaging
+# ====================
+*.tar.gz
+*.zip
+
+# ====================
+# Secrets / Keys
+# ====================
+*.pem
+*.key
+secrets.json

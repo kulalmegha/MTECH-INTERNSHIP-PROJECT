@@ -1,0 +1,194 @@
+{
+  "emotion_accuracy": 0.676,
+  "emotion_macro_f1": 0.6662622128607572,
+  "emotion_report": {
+    "fear/worry": {
+      "precision": 0.7777777777777778,
+      "recall": 0.7,
+      "f1-score": 0.7368421052631579,
+      "support": 10.0
+    },
+    "sadness": {
+      "precision": 0.7222222222222222,
+      "recall": 0.7222222222222222,
+      "f1-score": 0.7222222222222222,
+      "support": 18.0
+    },
+    "anger": {
+      "precision": 0.55,
+      "recall": 0.44,
+      "f1-score": 0.4888888888888889,
+      "support": 25.0
+    },
+    "joy": {
+      "precision": 0.7755102040816326,
+      "recall": 0.8085106382978723,
+      "f1-score": 0.7916666666666666,
+      "support": 47.0
+    },
+    "neutral": {
+      "precision": 0.6727272727272727,
+      "recall": 0.74,
+      "f1-score": 0.7047619047619048,
+      "support": 100.0
+    },
+    "other": {
+      "precision": 0.5909090909090909,
+      "recall": 0.52,
+      "f1-score": 0.5531914893617021,
+      "support": 50.0
+    },
+    "accuracy": 0.676,
+    "macro avg": {
+      "precision": 0.6815244279529994,
+      "recall": 0.6551221434200157,
+      "f1-score": 0.6662622128607572,
+      "support": 250.0
+    },
+    "weighted avg": {
+      "precision": 0.6711797567511854,
+      "recall": 0.676,
+      "f1-score": 0.6717389662098509,
+      "support": 250.0
+    }
+  },
+  "sentiment_accuracy": 0.572,
+  "sentiment_macro_f1": 0.5754215896366656,
+  "synthetic_results": [
+    {
+      "text": "I am worried about the upcoming court hearing, and I have not been sleeping properly.",
+      "context": "Anticipatory anxiety / Insomnia",
+      "sentiment_label": "negative",
+      "sentiment_score": 0.767,
+      "emotion_label": "fear/worry",
+      "emotion_score": 0.576,
+      "raw_emotion": "nervousness"
+    },
+    {
+      "text": "They drove past my house again last night shouting threats. I feel terrified.",
+      "context": "Active intimidation / Threat",
+      "sentiment_label": "negative",
+      "sentiment_score": 0.896,
+      "emotion_label": "fear/worry",
+      "emotion_score": 0.853,
+      "raw_emotion": "fear"
+    },
+    {
+      "text": "I feel completely numb and empty inside. Nothing seems to matter anymore.",
+      "context": "Depressive numbness / Helplessness",
+      "sentiment_label": "negative",
+      "sentiment_score": 0.884,
+      "emotion_label": "sadness",
+      "emotion_score": 0.606,
+      "raw_emotion": "sadness"
+    },
+    {
+      "text": "I cannot stop crying today. The grief is overwhelming and heavy.",
+      "context": "Acute grief / Somatic bereavement",
+      "sentiment_label": "negative",
+      "sentiment_score": 0.874,
+      "emotion_label": "sadness",
+      "emotion_score": 0.915,
+      "raw_emotion": "sadness"
+    },
+    {
+      "text": "I am so furious at the perpetrators walking free while we live in hiding.",
+      "context": "Trauma-related rage / Injustice",
+      "sentiment_label": "negative",
+      "sentiment_score": 0.941,
+      "emotion_label": "anger",
+      "emotion_score": 0.833,
+      "raw_emotion": "anger"
+    },
+    {
+      "text": "I met with the legal aid advocate today and felt a glimmer of hope.",
+      "context": "Positive resilience / Advocacy connection",
+      "sentiment_label": "positive",
+      "sentiment_score": 0.893,
+      "emotion_label": "joy",
+      "emotion_score": 0.815,
+      "raw_emotion": "optimism"
+    },
+    {
+      "text": "We moved to a safehouse and for the first time in months I felt safe.",
+      "context": "Relief / Physical safety restored",
+      "sentiment_label": "positive",
+      "sentiment_score": 0.897,
+      "emotion_label": "joy",
+      "emotion_score": 0.427,
+      "raw_emotion": "joy"
+    },
+    {
+      "text": "Every sudden noise outside sends my heart racing with panic.",
+      "context": "Hyperarousal / PTSD startle response",
+      "sentiment_label": "negative",
+      "sentiment_score": 0.872,
+      "emotion_label": "fear/worry",
+      "emotion_score": 0.74,
+      "raw_emotion": "fear"
+    },
+    {
+      "text": "I feel isolated from everyone in my community since the incident happened.",
+      "context": "Social stigma / Alienation",
+      "sentiment_label": "negative",
+      "sentiment_score": 0.912,
+      "emotion_label": "sadness",
+      "emotion_score": 0.619,
+      "raw_emotion": "sadness"
+    },
+    {
+      "text": "The nightmares keep waking me up in cold sweats, but I am trying to cope.",
+      "context": "Trauma intrusion / Coping effort",
+      "sentiment_label": "negative",
+      "sentiment_score": 0.715,
+      "emotion_label": "neutral",
+      "emotion_score": 0.134,
+      "raw_emotion": "neutral"
+    },
+    {
+      "text": "I need to talk to someone right now, I cannot manage these panic attacks alone.",
+      "context": "Acute crisis / Voluntary outreach",
+      "sentiment_label": "negative",
+      "sentiment_score": 0.877,
+      "emotion_label": "fear/worry",
+      "emotion_score": 0.274,
+      "raw_emotion": "fear"
+    },
+    {
+      "text": "Things are quiet today. Just doing normal chores at home.",
+      "context": "Routine baseline / Neutral activity",
+      "sentiment_label": "neutral",
+      "sentiment_score": 0.561,
+      "emotion_label": "neutral",
+      "emotion_score": 0.728,
+      "raw_emotion": "neutral"
+    },
+    {
+      "text": "I am deeply grateful for the counsellor checking in on me and my family.",
+      "context": "Social gratitude / Supportive bond",
+      "sentiment_label": "positive",
+      "sentiment_score": 0.968,
+      "emotion_label": "joy",
+      "emotion_score": 0.989,
+      "raw_emotion": "gratitude"
+    },
+    {
+      "text": "I feel so bitter and resentful about everything that was taken from us.",
+      "context": "Resentment / Long-term grievance",
+      "sentiment_label": "negative",
+      "sentiment_score": 0.935,
+      "emotion_label": "sadness",
+      "emotion_score": 0.323,
+      "raw_emotion": "sadness"
+    },
+    {
+      "text": "I managed to take a short walk outside today without feeling completely overwhelmed.",
+      "context": "Behavioral recovery milestone",
+      "sentiment_label": "positive",
+      "sentiment_score": 0.785,
+      "emotion_label": "neutral",
+      "emotion_score": 0.263,
+      "raw_emotion": "neutral"
+    }
+  ]
+}
